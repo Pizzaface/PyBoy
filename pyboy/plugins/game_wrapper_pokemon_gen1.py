@@ -101,3 +101,4 @@ class GameWrapperPokemonGen1(PyBoyGameWrapper):
             )
         )
         # yapf: enable
+        # yapf: enable
