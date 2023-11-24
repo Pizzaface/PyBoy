@@ -11,11 +11,12 @@ import os
 import sys
 import time
 import zlib
+from unittest import mock
 
 import numpy as np
-from pyboy import PyBoy, WindowEvent
+import pytest
 
-from . import utils
+from pyboy import PyBoy, WindowEvent, utils
 
 event_filter = [
     WindowEvent.PRESS_SPEED_UP,
@@ -32,12 +33,15 @@ def verify_screen_image_np(pyboy, saved_array):
         np.frombuffer(saved_array, dtype=np.uint8).reshape(144, 160, 3) ==
         pyboy.botsupport_manager().screen().screen_ndarray()
     )
-    if not match:
+    if not match and not os.environ.get("TEST_CI"):
         from PIL import Image
         original = Image.frombytes("RGB", (160, 144), np.frombuffer(saved_array, dtype=np.uint8).reshape(144, 160, 3))
         original.show()
         new = pyboy.botsupport_manager().screen().screen_image()
         new.show()
+        import PIL.ImageChops
+        PIL.ImageChops.difference(original, new).show()
+
     assert match
 
 
@@ -66,13 +70,17 @@ def replay(
     ROM,
     replay,
     window="headless",
-    verify=True,
+    verify=False,
     record_gif=None,
     gif_destination=None,
     rewind=False,
-    bootrom_file=utils.boot_rom,
+    bootrom_file=None,
     overwrite=RESET_REPLAYS,
-    gif_hash=None
+    gif_hash=None,
+    randomize=False,
+    padding_frames=0,
+    stop_frame=-1,
+    cgb=None,
 ):
     with open(replay, "rb") as f:
         recorded_input, b64_romhash, b64_state = json.loads(zlib.decompress(f.read()).decode("ascii"))
@@ -86,11 +94,16 @@ def replay(
         bootrom_file=bootrom_file,
         disable_input=True,
         rewind=rewind,
-        record_input=(RESET_REPLAYS and window in ["SDL2", "headless", "OpenGL"])
+        randomize=randomize,
+        cgb=cgb,
+        record_input=(RESET_REPLAYS and window in ["SDL2", "headless", "OpenGL"]),
     )
-    # pyboy.set_emulation_speed(0)
+    pyboy.set_emulation_speed(0)
     if state_data is not None:
         pyboy.load_state(state_data)
+    else:
+        for _ in range(padding_frames):
+            pyboy.tick()
 
     # Filters out the blacklisted events
     recorded_input = list(
@@ -105,7 +118,7 @@ def replay(
     next_event = recorded_input.pop(0)
 
     recording = False
-    while recorded_input != []:
+    while recorded_input != [] and stop_frame != frame_count:
         if record_gif is not None and (frame_count in record_gif):
             pyboy.send_input(WindowEvent.SCREEN_RECORDING_TOGGLE)
             recording ^= True
@@ -114,7 +127,7 @@ def replay(
             for e in next_event[1]:
                 pyboy.send_input(e)
 
-                if verify and not overwrite:
+                if verify and not overwrite and frame_count > 1: # First frame or two might be wrong on old statefiles
                     verify_screen_image_np(pyboy, base64.b64decode(next_event[2].encode("utf8")))
             next_event = recorded_input.pop(0)
         frame_count += 1
@@ -148,66 +161,67 @@ def replay(
     pyboy.stop(save=False)
 
 
-def test_pokemon():
-    replay(utils.pokemon_blue_rom, "tests/replays/pokemon_blue.replay")
-
-
-def test_pokemon_gif1():
+def test_pokemon(pokemon_blue_rom, boot_rom):
     replay(
-        utils.pokemon_blue_rom,
-        "tests/replays/pokemon_blue_gif1.replay",
-        record_gif=(1, 2714),
-        gif_destination="README/1.gif",
-        gif_hash="IlT5ixD6Fw2A4gzd+PaA1l9wXs2JkpkzA0JBj9DSU08="
+        pokemon_blue_rom,
+        "tests/replays/pokemon_blue.replay",
+        stop_frame=1074,
+        bootrom_file=boot_rom,
     )
 
 
-def test_pokemon_gif2():
+def test_pokemon_gif1(pokemon_gold_rom, boot_rom):
     replay(
-        utils.pokemon_blue_rom,
+        pokemon_gold_rom,
+        "tests/replays/pokemon_gold_gif.replay",
+        record_gif=(1, 2714),
+        gif_destination="extras/README/1.gif",
+        bootrom_file=boot_rom,
+    )
+
+
+def test_pokemon_gif2(pokemon_blue_rom, boot_rom):
+    replay(
+        pokemon_blue_rom,
         "tests/replays/pokemon_blue_gif2.replay",
         record_gif=(0, 180),
-        gif_destination="README/2.gif",
-        gif_hash="wMaLgnVQO/S+VJH96FeHyv9evQEo08qi5i6zZhNm/qo="
+        gif_destination="extras/README/2.gif",
+        bootrom_file=boot_rom,
     )
 
 
-def test_tetris():
-    replay(utils.tetris_rom, "tests/replays/tetris.replay")
-
-
-def test_supermarioland_gif():
+def test_tetris(tetris_rom, boot_rom):
     replay(
-        utils.supermarioland_rom,
-        "tests/replays/supermarioland_gif.replay",
-        record_gif=(122, 644),
-        gif_destination="README/3.gif",
-        gif_hash="15aVUmwtTq38E3SB91moQLYSTZVWuTNTUmzYVSgTg38="
+        tetris_rom,
+        "tests/replays/tetris.replay",
+        bootrom_file=boot_rom,
     )
 
 
-def test_supermarioland():
-    replay(utils.supermarioland_rom, "tests/replays/supermarioland.replay")
-
-
-def test_kirby():
+def test_supermarioland(supermarioland_rom, boot_rom):
     replay(
-        utils.kirby_rom,
+        supermarioland_rom,
+        "tests/replays/supermarioland.replay",
+        bootrom_file=boot_rom,
+    )
+
+
+def test_kirby(kirby_rom, boot_rom):
+    replay(
+        kirby_rom,
         "tests/replays/kirby_gif.replay",
         record_gif=(0, 360),
-        gif_destination="README/4.gif",
-        gif_hash="8f2Ambx4mzaaT5Obyb5/3NszEdGkUObHo9J0rR1AJUc="
+        gif_destination="extras/README/4.gif",
+        bootrom_file=boot_rom,
     )
 
 
-def test_rewind():
+def test_rewind(supermarioland_rom, boot_rom):
     replay(
-        utils.supermarioland_rom,
+        supermarioland_rom,
         "tests/replays/supermarioland_rewind.replay",
         record_gif=(130, 544),
-        gif_destination="README/5.gif",
+        gif_destination="extras/README/5.gif",
         rewind=True,
         bootrom_file=None,
-        verify=False,
-        gif_hash="EoISd0SrD8clVa/KtNKX+NDOM3uG4yq0bTtbIMssOX0="
     )

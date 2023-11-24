@@ -3,7 +3,7 @@
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
 
-STATE_VERSION = 4
+STATE_VERSION = 9
 
 ##############################################################
 # Buffer classes
@@ -15,6 +15,44 @@ class IntIOInterface:
 
     def write(self, byte):
         raise Exception("Not implemented!")
+
+    def write_64bit(self, value):
+        self.write(value & 0xFF)
+        self.write((value >> 8) & 0xFF)
+        self.write((value >> 16) & 0xFF)
+        self.write((value >> 24) & 0xFF)
+        self.write((value >> 32) & 0xFF)
+        self.write((value >> 40) & 0xFF)
+        self.write((value >> 48) & 0xFF)
+        self.write((value >> 56) & 0xFF)
+
+    def read_64bit(self):
+        a = self.read()
+        b = self.read()
+        c = self.read()
+        d = self.read()
+        e = self.read()
+        f = self.read()
+        g = self.read()
+        h = self.read()
+        return a | (b << 8) | (c << 16) | (d << 24) | (e << 32) | (f << 40) | (g << 48) | (h << 56)
+
+    def write_32bit(self, value):
+        self.write(value & 0xFF)
+        self.write((value >> 8) & 0xFF)
+        self.write((value >> 16) & 0xFF)
+        self.write((value >> 24) & 0xFF)
+
+    def read_32bit(self):
+        a = self.read()
+        b = self.read()
+        c = self.read()
+        d = self.read()
+        return int(a | (b << 8) | (c << 16) | (d << 24))
+
+    def write_16bit(self, value):
+        self.write(value & 0xFF)
+        self.write((value >> 8) & 0xFF)
 
     def read_16bit(self):
         a = self.read()
@@ -37,6 +75,9 @@ class IntIOInterface:
         raise Exception("Not implemented!")
 
     def seek_frame(self, _):
+        raise Exception("Not implemented!")
+
+    def tell(self):
         raise Exception("Not implemented!")
 
 
@@ -64,6 +105,9 @@ class IntIOWrapper(IntIOInterface):
 
     def flush(self):
         self.buffer.flush()
+
+    def tell(self):
+        return self.buffer.tell()
 
 
 ##############################################################
@@ -151,7 +195,13 @@ class WindowEvent:
         _INTERNAL_RENDERER_FLUSH,
         _INTERNAL_MOUSE,
         _INTERNAL_MARK_TILE,
-    ) = range(36)
+        SCREENSHOT_RECORD,
+        DEBUG_MEMORY_SCROLL_DOWN,
+        DEBUG_MEMORY_SCROLL_UP,
+        MOD_SHIFT_ON,
+        MOD_SHIFT_OFF,
+        FULL_SCREEN_TOGGLE,
+    ) = range(42)
 
     def __init__(self, event):
         self.event = event
@@ -162,11 +212,64 @@ class WindowEvent:
         else:
             return self.event == x.event
 
+    def __int__(self):
+        return self.event
+
+    def __str__(self):
+        return (
+            "QUIT",
+            "PRESS_ARROW_UP",
+            "PRESS_ARROW_DOWN",
+            "PRESS_ARROW_RIGHT",
+            "PRESS_ARROW_LEFT",
+            "PRESS_BUTTON_A",
+            "PRESS_BUTTON_B",
+            "PRESS_BUTTON_SELECT",
+            "PRESS_BUTTON_START",
+            "RELEASE_ARROW_UP",
+            "RELEASE_ARROW_DOWN",
+            "RELEASE_ARROW_RIGHT",
+            "RELEASE_ARROW_LEFT",
+            "RELEASE_BUTTON_A",
+            "RELEASE_BUTTON_B",
+            "RELEASE_BUTTON_SELECT",
+            "RELEASE_BUTTON_START",
+            "_INTERNAL_TOGGLE_DEBUG",
+            "PRESS_SPEED_UP",
+            "RELEASE_SPEED_UP",
+            "STATE_SAVE",
+            "STATE_LOAD",
+            "PASS",
+            "SCREEN_RECORDING_TOGGLE",
+            "PAUSE",
+            "UNPAUSE",
+            "PAUSE_TOGGLE",
+            "PRESS_REWIND_BACK",
+            "PRESS_REWIND_FORWARD",
+            "RELEASE_REWIND_BACK",
+            "RELEASE_REWIND_FORWARD",
+            "WINDOW_FOCUS",
+            "WINDOW_UNFOCUS",
+            "_INTERNAL_RENDERER_FLUSH",
+            "_INTERNAL_MOUSE",
+            "_INTERNAL_MARK_TILE",
+            "SCREENSHOT_RECORD",
+            "DEBUG_MEMORY_SCROLL_DOWN",
+            "DEBUG_MEMORY_SCROLL_UP",
+            "MOD_SHIFT_ON",
+            "MOD_SHIFT_OFF",
+            "FULL_SCREEN_TOGGLE",
+        )[self.event]
+
 
 class WindowEventMouse(WindowEvent):
-    def __init__(self, *args, window_id=-1, mouse_x=-1, mouse_y=-1, mouse_button=-1):
+    def __init__(
+        self, *args, window_id=-1, mouse_x=-1, mouse_y=-1, mouse_scroll_x=-1, mouse_scroll_y=-1, mouse_button=-1
+    ):
         super().__init__(*args)
         self.window_id = window_id
         self.mouse_x = mouse_x
         self.mouse_y = mouse_y
+        self.mouse_scroll_x = mouse_scroll_x
+        self.mouse_scroll_y = mouse_scroll_y
         self.mouse_button = mouse_button

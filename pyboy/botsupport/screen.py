@@ -39,7 +39,7 @@ class Screen:
         to the right or bottom edge than 160x144 pixels, the screen will wrap around and render from the opposite site
         of the tile map.
 
-        For more details, see "7.4 Viewport" in the [report](https://github.com/Baekalfen/PyBoy/raw/master/PyBoy.pdf),
+        For more details, see "7.4 Viewport" in the [report](https://github.com/Baekalfen/PyBoy/raw/master/extras/PyBoy.pdf),
         or the Pan Docs under [LCD Position and Scrolling](http://bgb.bircd.org/pandocs.htm#lcdpositionandscrolling).
 
         Returns
@@ -60,9 +60,12 @@ class Screen:
         Returns
         -------
         list:
-            Nested list of SCX, SCY, WX and WY for each scanline (144x4).
+            Nested list of SCX, SCY, WX and WY for each scanline (144x4). Returns (0, 0, 0, 0) when LCD is off.
         """
-        return [[line[0], line[1], line[2], line[3]] for line in self.mb.renderer._scanlineparameters]
+        if self.mb.lcd._LCDC.lcd_enable:
+            return [[line[0], line[1], line[2], line[3]] for line in self.mb.lcd.renderer._scanlineparameters]
+        else:
+            return [[0, 0, 0, 0] for line in range(144)]
 
     def raw_screen_buffer(self):
         """
@@ -77,7 +80,7 @@ class Screen:
         bytes:
             92160 bytes of screen data in a `bytes` object.
         """
-        return self.mb.renderer._screenbuffer_raw.tobytes()
+        return self.mb.lcd.renderer._screenbuffer_raw.tobytes()
 
     def raw_screen_buffer_dims(self):
         """
@@ -88,7 +91,7 @@ class Screen:
         tuple:
             A two-tuple of the buffer dimensions. E.g. (160, 144).
         """
-        return self.mb.renderer.buffer_dims
+        return self.mb.lcd.renderer.buffer_dims
 
     def raw_screen_buffer_format(self):
         """
@@ -99,7 +102,7 @@ class Screen:
         str:
             Color format of the raw screen buffer. E.g. 'RGB'.
         """
-        return self.mb.renderer.color_format
+        return self.mb.lcd.renderer.color_format
 
     def screen_ndarray(self):
         """
@@ -110,8 +113,7 @@ class Screen:
         numpy.ndarray:
             Screendata in `ndarray` of bytes with shape (160, 144, 3)
         """
-        return np.frombuffer(self.raw_screen_buffer(), dtype=np.uint8).reshape(ROWS, COLS, 4)[:, :, 1:]
-        # return self.mb.renderer.screen_buffer_as_ndarray()
+        return np.frombuffer(self.mb.lcd.renderer._screenbuffer_raw, dtype=np.uint8).reshape(ROWS, COLS, 4)[:, :, 1:]
 
     def screen_image(self):
         """
@@ -127,10 +129,11 @@ class Screen:
             RGB image of (160, 144) pixels
         """
         if not Image:
-            logger.warning("Cannot generate screen image. Missing dependency \"Pillow\".")
+            logger.error("Cannot generate screen image. Missing dependency \"Pillow\".")
             return None
 
         # NOTE: Might have room for performance improvement
         # It's not possible to use the following, as the byte-order (endianess) isn't supported in Pillow
         # Image.frombytes('RGBA', self.buffer_dims, self.screen_buffer()).show()
-        return Image.fromarray(self.screen_ndarray(), "RGB")
+        # FIXME: FORMAT IS BGR NOT RGB!!!
+        return Image.fromarray(self.screen_ndarray()[:, :, [2, 1, 0]], "RGB")

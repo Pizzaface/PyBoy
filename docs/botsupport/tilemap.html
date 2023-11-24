@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.7.5" />
+<meta name="generator" content="pdoc 0.10.0" />
 <title>pyboy.botsupport.tilemap API documentation</title>
 <meta name="description" content="The Game Boy has two tile maps, which defines what is rendered on the screen." />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
@@ -27,10 +27,9 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">#
-# License: See LICENSE file
+# License: See LICENSE.md file
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
-
 &#34;&#34;&#34;
 The Game Boy has two tile maps, which defines what is rendered on the screen.
 &#34;&#34;&#34;
@@ -129,9 +128,8 @@ class TileMap:
         tilemap_identifiers = np.asarray(self[:, :], dtype=np.uint32)
         matches = []
         for i in identifiers:
-            matches.append([[int(y) for y in x] for x in np.argwhere(tilemap_identifiers==i)])
+            matches.append([[int(y) for y in x] for x in np.argwhere(tilemap_identifiers == i)])
         return matches
-
 
     def _tile_address(self, column, row):
         &#34;&#34;&#34;
@@ -215,18 +213,20 @@ class TileMap:
         adjust = 4
         _use_tile_objects = self._use_tile_objects
         self.use_tile_objects(False)
+        # yapf: disable
         return_data = (
-                f&#34;Tile Map Address: {self.map_offset:#0{6}x}, &#34; +
-                f&#34;Signed Tile Data: {&#39;Yes&#39; if self.signed_tile_data else &#39;No&#39;}\n&#34; +
-                &#34; &#34;*5 + &#34;&#34;.join([f&#34;{i: &lt;4}&#34; for i in range(32)]) + &#34;\n&#34; +
-                &#34;_&#34;*(adjust*32+2) + &#34;\n&#34; +
-                &#34;\n&#34;.join(
-                    [
-                        f&#34;{i: &lt;3}| &#34; + &#34;&#34;.join([str(tile).ljust(adjust) for tile in line])
-                        for i, line in enumerate(self[:, :])
-                    ]
-                )
+            f&#34;Tile Map Address: {self.map_offset:#0{6}x}, &#34; +
+            f&#34;Signed Tile Data: {&#39;Yes&#39; if self.signed_tile_data else &#39;No&#39;}\n&#34; +
+            &#34; &#34;*5 + &#34;&#34;.join([f&#34;{i: &lt;4}&#34; for i in range(32)]) + &#34;\n&#34; +
+            &#34;_&#34;*(adjust*32+2) + &#34;\n&#34; +
+            &#34;\n&#34;.join(
+                [
+                    f&#34;{i: &lt;3}| &#34; + &#34;&#34;.join([str(tile).ljust(adjust) for tile in line])
+                    for i, line in enumerate(self[:, :])
+                ]
             )
+        )
+        # yapf: enable
         self.use_tile_objects(_use_tile_objects)
         return return_data
 
@@ -285,8 +285,8 @@ class TileMap:
 <dd>
 <section class="desc"><p>The Game Boy has two tile maps, which defines what is rendered on the screen. These are also referred to as
 "background" and "window".</p>
-<p>Use <a title="pyboy.botsupport.BotSupportManager.tilemap_background" href="index.html#pyboy.botsupport.BotSupportManager.tilemap_background"><code>BotSupportManager.tilemap_background()</code></a> and
-<a title="pyboy.botsupport.BotSupportManager.tilemap_window" href="index.html#pyboy.botsupport.BotSupportManager.tilemap_window"><code>BotSupportManager.tilemap_window()</code></a> to instantiate this object.</p>
+<p>Use <code><a title="pyboy.botsupport.BotSupportManager.tilemap_background" href="index.html#pyboy.botsupport.BotSupportManager.tilemap_background">BotSupportManager.tilemap_background()</a></code> and
+<code><a title="pyboy.botsupport.BotSupportManager.tilemap_window" href="index.html#pyboy.botsupport.BotSupportManager.tilemap_window">BotSupportManager.tilemap_window()</a></code> to instantiate this object.</p>
 <p>This object defines <code>__getitem__</code>, which means it can be accessed with the square brackets to get a tile
 identifier at a given coordinate.</p>
 <p>Example:</p>
@@ -395,9 +395,8 @@ need the entire 32x32 tile map, you can use the shortcut: <code>tilemap[:,:]</co
         tilemap_identifiers = np.asarray(self[:, :], dtype=np.uint32)
         matches = []
         for i in identifiers:
-            matches.append([[int(y) for y in x] for x in np.argwhere(tilemap_identifiers==i)])
+            matches.append([[int(y) for y in x] for x in np.argwhere(tilemap_identifiers == i)])
         return matches
-
 
     def _tile_address(self, column, row):
         &#34;&#34;&#34;
@@ -481,18 +480,20 @@ need the entire 32x32 tile map, you can use the shortcut: <code>tilemap[:,:]</co
         adjust = 4
         _use_tile_objects = self._use_tile_objects
         self.use_tile_objects(False)
+        # yapf: disable
         return_data = (
-                f&#34;Tile Map Address: {self.map_offset:#0{6}x}, &#34; +
-                f&#34;Signed Tile Data: {&#39;Yes&#39; if self.signed_tile_data else &#39;No&#39;}\n&#34; +
-                &#34; &#34;*5 + &#34;&#34;.join([f&#34;{i: &lt;4}&#34; for i in range(32)]) + &#34;\n&#34; +
-                &#34;_&#34;*(adjust*32+2) + &#34;\n&#34; +
-                &#34;\n&#34;.join(
-                    [
-                        f&#34;{i: &lt;3}| &#34; + &#34;&#34;.join([str(tile).ljust(adjust) for tile in line])
-                        for i, line in enumerate(self[:, :])
-                    ]
-                )
+            f&#34;Tile Map Address: {self.map_offset:#0{6}x}, &#34; +
+            f&#34;Signed Tile Data: {&#39;Yes&#39; if self.signed_tile_data else &#39;No&#39;}\n&#34; +
+            &#34; &#34;*5 + &#34;&#34;.join([f&#34;{i: &lt;4}&#34; for i in range(32)]) + &#34;\n&#34; +
+            &#34;_&#34;*(adjust*32+2) + &#34;\n&#34; +
+            &#34;\n&#34;.join(
+                [
+                    f&#34;{i: &lt;3}| &#34; + &#34;&#34;.join([str(tile).ljust(adjust) for tile in line])
+                    for i, line in enumerate(self[:, :])
+                ]
             )
+        )
+        # yapf: enable
         self.use_tile_objects(_use_tile_objects)
         return return_data
 
@@ -592,7 +593,7 @@ the coordinates where each identifier is found.</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>list</code>:</dt>
+<dt><code>list:</code></dt>
 <dd>list of matches for every tile identifier in the input</dd>
 </dl></section>
 <details class="source">
@@ -626,7 +627,7 @@ the coordinates where each identifier is found.</p>
     tilemap_identifiers = np.asarray(self[:, :], dtype=np.uint32)
     matches = []
     for i in identifiers:
-        matches.append([[int(y) for y in x] for x in np.argwhere(tilemap_identifiers==i)])
+        matches.append([[int(y) for y in x] for x in np.argwhere(tilemap_identifiers == i)])
     return matches</code></pre>
 </details>
 </dd>
@@ -634,8 +635,8 @@ the coordinates where each identifier is found.</p>
 <span>def <span class="ident">tile</span></span>(<span>self, column, row)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Provides a <a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile"><code>Tile</code></a>-object which allows for easy interpretation of the tile data. The
-object is agnostic to where it was found in the tilemap. I.e. equal <a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile"><code>Tile</code></a>-objects might
+<section class="desc"><p>Provides a <code><a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile">Tile</a></code>-object which allows for easy interpretation of the tile data. The
+object is agnostic to where it was found in the tilemap. I.e. equal <code><a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile">Tile</a></code>-objects might
 be returned from two different coordinates in the tile map if they are shown different places on the screen.</p>
 <h2 id="args">Args</h2>
 <dl>
@@ -645,7 +646,7 @@ be returned from two different coordinates in the tile map if they are shown dif
 <dd>Row in this tile map.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p><a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile"><code>Tile</code></a>:
+<p><code><a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile">Tile</a></code>:
 Tile object corresponding to the tile index at the given coordinate in the
 tile map.</p></section>
 <details class="source">
@@ -690,7 +691,7 @@ to quickly recognize what is on the screen through this tile view.</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>int</code>:</dt>
+<dt><code>int:</code></dt>
 <dd>Tile identifier.</dd>
 </dl></section>
 <details class="source">
@@ -733,7 +734,7 @@ to quickly recognize what is on the screen through this tile view.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>switch</code></strong> :&ensp;<code>bool</code></dt>
-<dd>If True, accesses will return <a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile"><code>Tile</code></a>-object. If False, accesses will
+<dd>If True, accesses will return <code><a title="pyboy.botsupport.tile.Tile" href="tile.html#pyboy.botsupport.tile.Tile">Tile</a></code>-object. If False, accesses will
 return an <code>int</code>.</dd>
 </dl></section>
 <details class="source">
@@ -786,7 +787,7 @@ return an <code>int</code>.</dd>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.5</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad()</script>

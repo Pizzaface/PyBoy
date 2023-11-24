@@ -1,5 +1,6 @@
 # Change in setup.py
-cython; platform_python_implementation == 'CPython'
+setuptools>=61.0.0
+cython>=3.0.0,!=3.0.4; platform_python_implementation == 'CPython'
 numpy
-pillow
 pysdl2
+pysdl2-dll

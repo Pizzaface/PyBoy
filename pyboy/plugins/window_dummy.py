@@ -2,6 +2,7 @@
 # License: See LICENSE.md file
 # GitHub: https://github.com/Baekalfen/PyBoy
 #
+
 import logging
 
 from pyboy.plugins.base_plugin import PyBoyWindowPlugin
@@ -16,10 +17,13 @@ class WindowDummy(PyBoyWindowPlugin):
         if not self.enabled():
             return
 
-        self.mb.disable_renderer = True
+        pyboy._rendering(False)
+        logger.warning(
+            'This window type does not support frame-limiting. `pyboy.set_emulation_speed(...)` will have no effect, as it\'s always running at full speed.'
+        )
 
     def enabled(self):
         return self.pyboy_argv.get("window_type") == "dummy"
 
     def set_title(self, title):
-        logger.info(title.encode())
+        logger.debug(title)

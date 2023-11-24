@@ -10,11 +10,9 @@ from libc.stdlib cimport malloc, free
 from libc.stdint cimport uint8_t, uint64_t, int64_t
 from pyboy.utils cimport IntIOInterface
 
-cdef (int, int) _dummy_declaration
-cdef (int, int, int, int) _dummy_declaration2
 
 cdef class Rewind(PyBoyPlugin):
-    cdef float rewind_speed
+    cdef double rewind_speed
     cdef FixedAllocBuffers rewind_buffer
 
 
@@ -22,17 +20,17 @@ cdef class Rewind(PyBoyPlugin):
 # Homogeneous cyclic buffer
 ##############################################################
 
-cdef int64_t FIXED_BUFFER_SIZE = 64*1024*128
-cdef int64_t FIXED_BUFFER_MIN_ALLOC = 64*1024
+cdef int64_t FIXED_BUFFER_SIZE = 8 * 1024 * 1024
+cdef int64_t FIXED_BUFFER_MIN_ALLOC = 256*1024
 cdef int64_t FILL_VALUE
 
-DEF FIXED_BUFFER_SIZE = 64*1024*128
-DEF FIXED_BUFFER_MIN_ALLOC = 64*1024
+DEF FIXED_BUFFER_SIZE = 8 * 1024 * 1024
+DEF FIXED_BUFFER_MIN_ALLOC = 256*1024
 
-cdef inline uint8_t* _malloc(size_t n):
+cdef inline uint8_t* _malloc(size_t n) noexcept:
     return <uint8_t*> malloc(FIXED_BUFFER_SIZE)
 
-cdef inline void _free(uint8_t* pointer):
+cdef inline void _free(uint8_t* pointer) noexcept:
     free(<void *> pointer)
 
 cdef class FixedAllocBuffers(IntIOInterface):
@@ -44,19 +42,19 @@ cdef class FixedAllocBuffers(IntIOInterface):
     cdef int64_t section_head
     cdef int64_t section_tail
     cdef int64_t section_pointer
-    cdef float avg_section_size
+    cdef double avg_section_size
 
-    @cython.locals(section_size=float)
-    cdef void new(self)
-    cdef void commit(self)
+    @cython.locals(section_size=double)
+    cdef void new(self) noexcept
+    cdef void commit(self) noexcept
     @cython.locals(_=int64_t, abs_frames=int64_t, head=int64_t, tail=int64_t)
-    cdef bint seek_frame(self, int64_t)
+    cdef bint seek_frame(self, int64_t) noexcept
 
 cdef class CompressedFixedAllocBuffers(FixedAllocBuffers):
     cdef uint64_t zeros
 
     @cython.locals(chunks=int64_t, rest=int64_t)
-    cdef void flush(self)
+    cdef void flush(self) noexcept
 
 cdef class DeltaFixedAllocBuffers(CompressedFixedAllocBuffers):
     cdef int64_t internal_pointer
@@ -66,4 +64,4 @@ cdef class DeltaFixedAllocBuffers(CompressedFixedAllocBuffers):
     cdef int64_t base_frame
     cdef int64_t injected_zero_frame
 
-    cdef void flush_internal_buffer(self)
+    cdef void flush_internal_buffer(self) noexcept

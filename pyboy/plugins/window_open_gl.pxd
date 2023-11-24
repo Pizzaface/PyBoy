@@ -9,18 +9,16 @@ from libc.stdint cimport uint8_t, uint16_t, uint32_t
 from pyboy.plugins.base_plugin cimport PyBoyWindowPlugin
 
 
-cdef (int, int) _dummy_declaration
-cdef (int, int, int, int) _dummy_declaration2
 
 cdef int ROWS, COLS
 
 cdef class WindowOpenGL(PyBoyWindowPlugin):
     cdef list events
 
-    cdef void _glkeyboard(self, str, int, int, bint)
-    cdef void _glkeyboardspecial(self, char, int, int, bint)
+    cdef void _glkeyboard(self, str, int, int, bint) noexcept
+    cdef void _glkeyboardspecial(self, char, int, int, bint) noexcept
 
     # TODO: Callbacks don't really work, when Cythonized
-    cpdef void _gldraw(self)
-    @cython.locals(scale=float)
-    cpdef void _glreshape(self, int, int)
+    cpdef void _gldraw(self) noexcept
+    @cython.locals(scale=double)
+    cpdef void _glreshape(self, int, int) noexcept

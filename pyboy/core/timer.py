@@ -27,6 +27,12 @@ class Timer:
         self.TAC = 0
         self.dividers = [1024, 16, 64, 256]
 
+    def reset(self):
+        # TODO: Should probably one be DIV=0, but this makes a bunch of mooneye tests pass
+        self.DIV_counter = 0
+        self.TIMA_counter = 0
+        self.DIV = 0
+
     def tick(self, cycles):
         self.DIV_counter += cycles
         self.DIV += (self.DIV_counter >> 8) # Add overflown bits to DIV
@@ -50,7 +56,7 @@ class Timer:
 
         return False
 
-    def cyclestointerrupt(self):
+    def cycles_to_interrupt(self):
         if self.TAC & 0b100 == 0: # Check if timer is not enabled
             # Large enough, that 'calculate_cycles' will choose 'x'
             return 1 << 16
@@ -60,3 +66,19 @@ class Timer:
         cyclesleft = ((0x100 - self.TIMA) * divider) - self.TIMA_counter
 
         return cyclesleft
+
+    def save_state(self, f):
+        f.write(self.DIV)
+        f.write(self.TIMA)
+        f.write_16bit(self.DIV_counter)
+        f.write_16bit(self.TIMA_counter)
+        f.write(self.TMA)
+        f.write(self.TAC)
+
+    def load_state(self, f, state_version):
+        self.DIV = f.read()
+        self.TIMA = f.read()
+        self.DIV_counter = f.read_16bit()
+        self.TIMA_counter = f.read_16bit()
+        self.TMA = f.read()
+        self.TAC = f.read()
